@@ -23,7 +23,6 @@ Una aplicación web simple para gestionar gastos, construida con HTML, CSS (Tail
 - `styles.css`: Estilos CSS (no utilizado en la versión final con Tailwind)
 - `tailwind.config.js`: Configuración de Tailwind CSS
 - `postcss.config.js`: Configuración de PostCSS
-- `input.css`: Archivo de entrada para Tailwind
 
 ## Funcionalidades
 
