@@ -8,16 +8,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Ash424242/expenseflow-project.git"
+    "url": "git+https://github.com/Ash424242/taskflow-project.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/Ash424242/expenseflow-project/issues"
+    "url": "https://github.com/Ash424242/taskflow-project/issues"
   },
-  "homepage": "https://github.com/Ash424242/expenseflow-project#readme",
+  "homepage": "https://github.com/Ash424242/taskflow-project#readme",
   "devDependencies": {
     "autoprefixer": "^10.4.27",
     "postcss": "^8.5.8",
