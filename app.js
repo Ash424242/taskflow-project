@@ -209,6 +209,61 @@ function getCategoryBg(category) {
 }
 
 /**
+ * Crea un span configurado para el título del gasto.
+ *
+ * @param {string} title
+ * @returns {HTMLSpanElement}
+ */
+function createExpenseTitleElement(title) {
+    const titleElement = document.createElement('span');
+    titleElement.className = 'flex-1 font-semibold text-gray-800 dark:text-gray-100 truncate pr-4';
+    titleElement.textContent = title;
+    return titleElement;
+}
+
+/**
+ * Crea el badge visual del importe.
+ *
+ * @param {number} amount
+ * @returns {HTMLSpanElement}
+ */
+function createExpenseAmountElement(amount) {
+    const amountElement = document.createElement('span');
+    amountElement.className = 'w-24 text-right font-bold text-blue-600 dark:text-blue-400 px-3 py-1 bg-blue-50 dark:bg-blue-950 rounded-full mr-2';
+    amountElement.textContent = `${parseFloat(amount).toFixed(2)} €`;
+    return amountElement;
+}
+
+/**
+ * Crea el badge visual de la categoría.
+ *
+ * @param {string} category
+ * @returns {HTMLSpanElement}
+ */
+function createExpenseCategoryElement(category) {
+    const categoryElement = document.createElement('span');
+    categoryElement.className = `w-32 text-center px-3 py-1 ${getCategoryBg(category)} text-gray-600 dark:text-gray-300 rounded-full text-xs font-semibold`;
+    categoryElement.textContent = category;
+    return categoryElement;
+}
+
+/**
+ * Crea el botón de borrado de una fila de gasto.
+ *
+ * @param {number} index
+ * @returns {HTMLButtonElement}
+ */
+function createExpenseDeleteButton(index) {
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'expense-delete w-10 text-center text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:rounded focus-visible:outline-none';
+    deleteButton.setAttribute('data-index', index);
+    deleteButton.setAttribute('aria-label', 'Eliminar gasto');
+    deleteButton.textContent = '×';
+    return deleteButton;
+}
+
+/**
  * Construye el nodo DOM que representa un gasto dentro del listado.
  *
  * @param {{ title: string, amount: number, category: string }} expense
@@ -217,29 +272,15 @@ function getCategoryBg(category) {
  */
 function createExpenseElement(expense, index) {
     const expenseElement = document.createElement('div');
-    const titleElement = document.createElement('span');
-    const amountElement = document.createElement('span');
-    const categoryElement = document.createElement('span');
-    const deleteButton = document.createElement('button');
 
     expenseElement.className = `flex items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-500 hover:shadow-md ${searchQuery ? 'cursor-default' : 'cursor-move'}`;
     expenseElement.draggable = !searchQuery;
     expenseElement.setAttribute('data-expense-index', index);
 
-    titleElement.className = 'flex-1 font-semibold text-gray-800 dark:text-gray-100 truncate pr-4';
-    titleElement.textContent = expense.title;
-
-    amountElement.className = 'w-24 text-right font-bold text-blue-600 dark:text-blue-400 px-3 py-1 bg-blue-50 dark:bg-blue-950 rounded-full mr-2';
-    amountElement.textContent = `${parseFloat(expense.amount).toFixed(2)} €`;
-
-    categoryElement.className = `w-32 text-center px-3 py-1 ${getCategoryBg(expense.category)} text-gray-600 dark:text-gray-300 rounded-full text-xs font-semibold`;
-    categoryElement.textContent = expense.category;
-
-    deleteButton.type = 'button';
-    deleteButton.className = 'expense-delete w-10 text-center text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:rounded focus-visible:outline-none';
-    deleteButton.setAttribute('data-index', index);
-    deleteButton.setAttribute('aria-label', 'Eliminar gasto');
-    deleteButton.textContent = '×';
+    const titleElement = createExpenseTitleElement(expense.title);
+    const amountElement = createExpenseAmountElement(expense.amount);
+    const categoryElement = createExpenseCategoryElement(expense.category);
+    const deleteButton = createExpenseDeleteButton(index);
 
     expenseElement.append(titleElement, amountElement, categoryElement, deleteButton);
 
