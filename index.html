@@ -30,16 +30,18 @@
     <!-- Menú lateral: en movil se muestra como bloque normal; en desktop, como sidebar fijo -->
     <aside class="bg-white dark:bg-gray-800 p-6 w-full md:w-80 md:fixed md:right-0 md:top-0 md:h-screen md:overflow-y-auto border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 transition-colors duration-500 shadow-sm md:shadow-none">
         <form id="expense-form" class="flex flex-col gap-3">
-            <input type="text" id="expense-input" placeholder="Nombre del gasto (ej. Cine)" required class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus-visible:outline-none transition-colors duration-500">
+            <input type="text" id="expense-input" placeholder="Nombre del gasto (ej. Cine)" minlength="2" maxlength="60" required class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus-visible:outline-none transition-colors duration-500">
             
-            <input type="number" id="expense-amount" placeholder="Importe (€)" step="0.01" min="0" required class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus-visible:outline-none transition-colors duration-500">
+            <input type="number" id="expense-amount" placeholder="Importe (€)" step="0.01" min="0.01" max="1000000" required class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus-visible:outline-none transition-colors duration-500">
             
-            <select id="expense-category" class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus-visible:outline-none transition-colors duration-500">
+            <select id="expense-category" required class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus-visible:outline-none transition-colors duration-500">
                 <option value="Ocio">Ocio</option>
                 <option value="Supermercado">Supermercado</option>
                 <option value="Hogar">Hogar</option>
                 <option value="Transporte">Transporte</option>
             </select>
+
+            <p id="form-error" class="hidden text-sm font-medium text-red-600 dark:text-red-400" role="alert" aria-live="polite"></p>
             
             <button type="submit" class="p-2.5 mt-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 focus-visible:ring-4 focus-visible:ring-blue-500/50 focus-visible:outline-none transition-all shadow-md hover:shadow-lg">Añadir Gasto</button>
         </form>

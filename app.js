@@ -1,6 +1,9 @@
 // Array para almacenar gastos
 let expenses = [];
 let searchQuery = '';
+const ALLOWED_CATEGORIES = ['Ocio', 'Supermercado', 'Hogar', 'Transporte'];
+const MAX_TITLE_LENGTH = 60;
+const MAX_AMOUNT = 1000000;
 
 // Cargar gastos desde localStorage al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
@@ -38,13 +41,15 @@ function loadExpenses() {
 }
 
 function isValidExpense(expense) {
-    return Boolean(
-        expense
-        && typeof expense.title === 'string'
-        && expense.title.trim()
-        && Number.isFinite(Number(expense.amount))
-        && typeof expense.category === 'string'
-    );
+    if (!expense || typeof expense.title !== 'string' || typeof expense.category !== 'string') {
+        return false;
+    }
+
+    return validateExpenseData({
+        title: expense.title,
+        amount: Number(expense.amount),
+        category: expense.category
+    }) === null;
 }
 
 function normalizeExpense(expense) {
@@ -53,6 +58,44 @@ function normalizeExpense(expense) {
         amount: Number(expense.amount),
         category: expense.category
     };
+}
+
+function validateExpenseData(expense) {
+    const normalizedTitle = typeof expense.title === 'string' ? expense.title.trim() : '';
+
+    if (normalizedTitle.length < 2) {
+        return 'El nombre del gasto debe tener al menos 2 caracteres.';
+    }
+
+    if (normalizedTitle.length > MAX_TITLE_LENGTH) {
+        return `El nombre del gasto no puede superar los ${MAX_TITLE_LENGTH} caracteres.`;
+    }
+
+    if (!Number.isFinite(expense.amount) || expense.amount <= 0) {
+        return 'El importe debe ser un número mayor que 0.';
+    }
+
+    if (expense.amount > MAX_AMOUNT) {
+        return `El importe no puede superar ${MAX_AMOUNT.toLocaleString('es-ES')} €.`;
+    }
+
+    if (!ALLOWED_CATEGORIES.includes(expense.category)) {
+        return 'La categoría seleccionada no es válida.';
+    }
+
+    return null;
+}
+
+function setFormError(message) {
+    const errorElement = document.getElementById('form-error');
+    errorElement.textContent = message;
+    errorElement.classList.remove('hidden');
+}
+
+function clearFormError() {
+    const errorElement = document.getElementById('form-error');
+    errorElement.textContent = '';
+    errorElement.classList.add('hidden');
 }
 
 // Función para guardar gastos en localStorage
@@ -129,20 +172,43 @@ document.getElementById('expense-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const input = document.getElementById('expense-input');
     const amountInput = document.getElementById('expense-amount');
-    const category = document.getElementById('expense-category').value;
+    const categoryInput = document.getElementById('expense-category');
     
-    const title = input.value.trim();
-    const amount = parseFloat(amountInput.value);
+    const expenseData = {
+        title: input.value,
+        amount: Number(amountInput.value),
+        category: categoryInput.value
+    };
+    const validationError = validateExpenseData(expenseData);
 
-    if (title && !isNaN(amount)) {
-        expenses.push({ title, amount, category });
-        saveExpenses();
-        renderExpenses();
-        
-        input.value = '';
-        amountInput.value = '';
+    if (validationError) {
+        setFormError(validationError);
+
+        if (validationError.includes('nombre')) {
+            input.focus();
+        } else if (validationError.includes('importe')) {
+            amountInput.focus();
+        } else {
+            categoryInput.focus();
+        }
+
+        return;
     }
+
+    clearFormError();
+    expenses.push(normalizeExpense(expenseData));
+    saveExpenses();
+    renderExpenses();
+
+    input.value = '';
+    amountInput.value = '';
+    categoryInput.value = ALLOWED_CATEGORIES[0];
+    input.focus();
 });
+
+document.getElementById('expense-input').addEventListener('input', clearFormError);
+document.getElementById('expense-amount').addEventListener('input', clearFormError);
+document.getElementById('expense-category').addEventListener('change', clearFormError);
 
 // Delegación de eventos para eliminar y drag & drop
 document.getElementById('expense-list').addEventListener('click', function(e) {
