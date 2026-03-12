@@ -62,6 +62,7 @@ function saveExpenses() {
 
 // Variable para rastrear el elemento que se está arrastrando
 let draggedExpenseIndex = null;
+let draggedExpenseElement = null;
 
 function getCategoryBg(category) {
     switch (category) {
@@ -80,8 +81,8 @@ function createExpenseElement(expense, index) {
     const categoryElement = document.createElement('span');
     const deleteButton = document.createElement('button');
 
-    expenseElement.className = 'flex items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-500 hover:shadow-md cursor-move';
-    expenseElement.draggable = true;
+    expenseElement.className = `flex items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-500 hover:shadow-md ${searchQuery ? 'cursor-default' : 'cursor-move'}`;
+    expenseElement.draggable = !searchQuery;
     expenseElement.setAttribute('data-expense-index', index);
 
     titleElement.className = 'flex-1 font-semibold text-gray-800 dark:text-gray-100 truncate pr-4';
@@ -155,45 +156,62 @@ document.getElementById('expense-list').addEventListener('click', function(e) {
 
 // Eventos de drag & drop
 document.getElementById('expense-list').addEventListener('dragstart', function(e) {
-    if (e.target.getAttribute('data-expense-index') !== null) {
-        draggedExpenseIndex = parseInt(e.target.getAttribute('data-expense-index'));
-        e.target.style.opacity = '0.5';
-        e.dataTransfer.effectAllowed = 'move';
+    const expenseElement = e.target.closest('[data-expense-index]');
+    if (!expenseElement || searchQuery) {
+        e.preventDefault();
+        return;
     }
+
+    draggedExpenseIndex = parseInt(expenseElement.getAttribute('data-expense-index'), 10);
+    draggedExpenseElement = expenseElement;
+    draggedExpenseElement.classList.add('dragging');
+    draggedExpenseElement.style.opacity = '0.5';
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(draggedExpenseIndex));
 });
 
 document.getElementById('expense-list').addEventListener('dragover', function(e) {
+    if (!draggedExpenseElement) {
+        return;
+    }
+
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     
     const afterElement = getDragAfterElement(this, e.clientY);
     const expenseList = this;
-    const draggedElement = document.querySelector(`[data-expense-index="${draggedExpenseIndex}"]`);
     
     if (afterElement == null) {
-        expenseList.appendChild(draggedElement);
+        expenseList.appendChild(draggedExpenseElement);
     } else {
-        expenseList.insertBefore(draggedElement, afterElement);
+        expenseList.insertBefore(draggedExpenseElement, afterElement);
     }
 });
 
 document.getElementById('expense-list').addEventListener('dragend', function(e) {
-    const draggingElement = document.querySelector('[data-expense-index]');
-    if (draggingElement) {
-        draggingElement.style.opacity = '1';
+    if (!draggedExpenseElement) {
+        return;
     }
+
+    draggedExpenseElement.classList.remove('dragging');
+    draggedExpenseElement.style.opacity = '1';
+    draggedExpenseElement = null;
+    draggedExpenseIndex = null;
 });
 
 document.getElementById('expense-list').addEventListener('drop', function(e) {
+    if (!draggedExpenseElement || searchQuery) {
+        return;
+    }
+
     e.preventDefault();
     
-    const draggedElement = document.querySelector(`[data-expense-index="${draggedExpenseIndex}"]`);
     const allExpenseElements = document.querySelectorAll('#expense-list > div');
     
     // Encontrar el nuevo índice basado en la posición del elemento
     let newIndex = 0;
     allExpenseElements.forEach((element, index) => {
-        if (element === draggedElement) {
+        if (element === draggedExpenseElement) {
             newIndex = index;
         }
     });
@@ -205,8 +223,6 @@ document.getElementById('expense-list').addEventListener('drop', function(e) {
         saveExpenses();
         renderExpenses();
     }
-    
-    draggedExpenseIndex = null;
 });
 
 // Función auxiliar para determinar después de cuál elemento debe insertarse
