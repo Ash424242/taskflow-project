@@ -25,6 +25,9 @@ function saveExpenses() {
     localStorage.setItem('gastos', JSON.stringify(expenses));
 }
 
+// Variable para rastrear el elemento que se está arrastrando
+let draggedExpenseIndex = null;
+
 // Función para renderizar gastos
 function renderExpenses() {
     const expenseList = document.getElementById('expense-list');
@@ -37,7 +40,9 @@ function renderExpenses() {
         // 2. Importe (w-24)
         // 3. Categoría (w-32)
         // 4. Botón (w-10)
-        expenseElement.className = 'flex items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-500 hover:shadow-md';
+        expenseElement.className = 'flex items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-500 hover:shadow-md cursor-move';
+        expenseElement.draggable = true;
+        expenseElement.setAttribute('data-expense-index', index);
         
         const amountText = parseFloat(expense.amount).toFixed(2);
 
@@ -99,7 +104,7 @@ document.getElementById('expense-form').addEventListener('submit', function(e) {
     }
 });
 
-// Delegación de eventos para eliminar
+// Delegación de eventos para eliminar y drag & drop
 document.getElementById('expense-list').addEventListener('click', function(e) {
     if (e.target.classList.contains('expense-delete')) {
         const index = parseInt(e.target.getAttribute('data-index'));
@@ -108,6 +113,78 @@ document.getElementById('expense-list').addEventListener('click', function(e) {
         renderExpenses();
     }
 });
+
+// Eventos de drag & drop
+document.getElementById('expense-list').addEventListener('dragstart', function(e) {
+    if (e.target.getAttribute('data-expense-index') !== null) {
+        draggedExpenseIndex = parseInt(e.target.getAttribute('data-expense-index'));
+        e.target.style.opacity = '0.5';
+        e.dataTransfer.effectAllowed = 'move';
+    }
+});
+
+document.getElementById('expense-list').addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    const afterElement = getDragAfterElement(this, e.clientY);
+    const expenseList = this;
+    const draggedElement = document.querySelector(`[data-expense-index="${draggedExpenseIndex}"]`);
+    
+    if (afterElement == null) {
+        expenseList.appendChild(draggedElement);
+    } else {
+        expenseList.insertBefore(draggedElement, afterElement);
+    }
+});
+
+document.getElementById('expense-list').addEventListener('dragend', function(e) {
+    const draggingElement = document.querySelector('[data-expense-index]');
+    if (draggingElement) {
+        draggingElement.style.opacity = '1';
+    }
+});
+
+document.getElementById('expense-list').addEventListener('drop', function(e) {
+    e.preventDefault();
+    
+    const draggedElement = document.querySelector(`[data-expense-index="${draggedExpenseIndex}"]`);
+    const allExpenseElements = document.querySelectorAll('#expense-list > div');
+    
+    // Encontrar el nuevo índice basado en la posición del elemento
+    let newIndex = 0;
+    allExpenseElements.forEach((element, index) => {
+        if (element === draggedElement) {
+            newIndex = index;
+        }
+    });
+    
+    // Reordenar el array de gastos
+    if (draggedExpenseIndex !== newIndex && draggedExpenseIndex !== null) {
+        const [draggedExpense] = expenses.splice(draggedExpenseIndex, 1);
+        expenses.splice(newIndex, 0, draggedExpense);
+        saveExpenses();
+        renderExpenses();
+    }
+    
+    draggedExpenseIndex = null;
+});
+
+// Función auxiliar para determinar después de cuál elemento debe insertarse
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('[data-expense-index]:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
 
 // Funcionalidad de búsqueda
 document.getElementById('search-input').addEventListener('input', function() {
