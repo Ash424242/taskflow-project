@@ -15,7 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadExpenses();
 });
 
-// Función para cargar gastos desde localStorage
+/**
+ * Carga los gastos guardados en localStorage y normaliza su estructura
+ * antes de pintar la lista.
+ *
+ * @returns {void}
+ */
 function loadExpenses() {
     const storedExpenses = localStorage.getItem('gastos');
     if (!storedExpenses) {
@@ -40,6 +45,13 @@ function loadExpenses() {
     renderExpenses();
 }
 
+/**
+ * Comprueba si un objeto tiene la forma mínima necesaria para tratarse
+ * como un gasto válido dentro de la aplicación.
+ *
+ * @param {{ title?: string, amount?: number|string, category?: string } | null | undefined} expense
+ * @returns {boolean}
+ */
 function isValidExpense(expense) {
     if (!expense || typeof expense.title !== 'string' || typeof expense.category !== 'string') {
         return false;
@@ -52,6 +64,12 @@ function isValidExpense(expense) {
     }) === null;
 }
 
+/**
+ * Convierte un gasto crudo a la estructura usada internamente por la app.
+ *
+ * @param {{ title: string, amount: number|string, category: string }} expense
+ * @returns {{ title: string, amount: number, category: string }}
+ */
 function normalizeExpense(expense) {
     return {
         title: expense.title.trim(),
@@ -60,6 +78,12 @@ function normalizeExpense(expense) {
     };
 }
 
+/**
+ * Valida los datos de un gasto antes de guardarlo o reutilizarlo.
+ *
+ * @param {{ title: string, amount: number, category: string }} expense
+ * @returns {string | null}
+ */
 function validateExpenseData(expense) {
     const normalizedTitle = typeof expense.title === 'string' ? expense.title.trim() : '';
 
@@ -86,19 +110,34 @@ function validateExpenseData(expense) {
     return null;
 }
 
+/**
+ * Muestra un mensaje de error visible en el formulario.
+ *
+ * @param {string} message
+ * @returns {void}
+ */
 function setFormError(message) {
     const errorElement = document.getElementById('form-error');
     errorElement.textContent = message;
     errorElement.classList.remove('hidden');
 }
 
+/**
+ * Limpia el mensaje de error activo del formulario.
+ *
+ * @returns {void}
+ */
 function clearFormError() {
     const errorElement = document.getElementById('form-error');
     errorElement.textContent = '';
     errorElement.classList.add('hidden');
 }
 
-// Función para guardar gastos en localStorage
+/**
+ * Persiste la lista actual de gastos en localStorage.
+ *
+ * @returns {void}
+ */
 function saveExpenses() {
     localStorage.setItem('gastos', JSON.stringify(expenses));
 }
@@ -107,6 +146,12 @@ function saveExpenses() {
 let draggedExpenseIndex = null;
 let draggedExpenseElement = null;
 
+/**
+ * Devuelve la clase de color correspondiente a una categoría.
+ *
+ * @param {string} category
+ * @returns {string}
+ */
 function getCategoryBg(category) {
     switch (category) {
         case 'Ocio': return 'bg-purple-100 dark:bg-purple-700';
@@ -117,6 +162,13 @@ function getCategoryBg(category) {
     }
 }
 
+/**
+ * Construye el nodo DOM que representa un gasto dentro del listado.
+ *
+ * @param {{ title: string, amount: number, category: string }} expense
+ * @param {number} index
+ * @returns {HTMLDivElement}
+ */
 function createExpenseElement(expense, index) {
     const expenseElement = document.createElement('div');
     const titleElement = document.createElement('span');
@@ -148,11 +200,21 @@ function createExpenseElement(expense, index) {
     return expenseElement;
 }
 
+/**
+ * Indica si un gasto coincide con la búsqueda activa.
+ *
+ * @param {{ title: string }} expense
+ * @returns {boolean}
+ */
 function matchesSearchQuery(expense) {
     return expense.title.toLowerCase().includes(searchQuery);
 }
 
-// Función para renderizar gastos
+/**
+ * Renderiza la lista visible de gastos teniendo en cuenta el filtro actual.
+ *
+ * @returns {void}
+ */
 function renderExpenses() {
     const expenseList = document.getElementById('expense-list');
     expenseList.innerHTML = '';
@@ -291,7 +353,14 @@ document.getElementById('expense-list').addEventListener('drop', function(e) {
     }
 });
 
-// Función auxiliar para determinar después de cuál elemento debe insertarse
+/**
+ * Calcula el elemento de referencia sobre el que debe insertarse el gasto
+ * arrastrado según la posición vertical del cursor.
+ *
+ * @param {HTMLElement} container
+ * @param {number} y
+ * @returns {Element | undefined}
+ */
 function getDragAfterElement(container, y) {
     const draggableElements = [...container.querySelectorAll('[data-expense-index]:not(.dragging)')];
     
