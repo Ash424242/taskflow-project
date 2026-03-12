@@ -1,5 +1,6 @@
 // Array para almacenar gastos
 let expenses = [];
+let searchQuery = '';
 
 // Cargar gastos desde localStorage al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
@@ -103,12 +104,20 @@ function createExpenseElement(expense, index) {
     return expenseElement;
 }
 
+function matchesSearchQuery(expense) {
+    return expense.title.toLowerCase().includes(searchQuery);
+}
+
 // Función para renderizar gastos
 function renderExpenses() {
     const expenseList = document.getElementById('expense-list');
     expenseList.innerHTML = '';
     
     expenses.forEach((expense, index) => {
+        if (!matchesSearchQuery(expense)) {
+            return;
+        }
+
         const expenseElement = createExpenseElement(expense, index);
         expenseList.appendChild(expenseElement);
     });
@@ -218,12 +227,8 @@ function getDragAfterElement(container, y) {
 
 // Funcionalidad de búsqueda
 document.getElementById('search-input').addEventListener('input', function() {
-    const query = this.value.toLowerCase();
-    const expenseElements = document.querySelectorAll('#expense-list > div');
-    expenseElements.forEach(expense => {
-        const title = expense.querySelector('span:first-child').textContent.toLowerCase();
-        expense.style.display = title.includes(query) ? 'flex' : 'none';
-    });
+    searchQuery = this.value.trim().toLowerCase();
+    renderExpenses();
 });
 
 // Alternar tema y guardar en localStorage
