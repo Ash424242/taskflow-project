@@ -40,6 +40,9 @@ Una aplicación web simple para gestionar gastos, construida con HTML, CSS (Tail
 ### Modo Oscuro
 - Haz clic en "Alternar Modo Oscuro" para cambiar entre temas claro y oscuro
 
+### Uso con Teclado
+Todos los controles interactivos son nativos (input, select, button), así que se pueden usar con Tab, Enter y Espacio.
+
 ## Despliegue
 
 La aplicación está diseñada para ser desplegada en la plataforma Vercel.

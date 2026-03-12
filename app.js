@@ -68,7 +68,12 @@ function renderExpenses() {
             </span>
             
             <!-- Columna Botón -->
-            <button class="expense-delete w-10 text-center text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors" data-index="${index}">&times;</button>
+            <button
+                type="button"
+                class="expense-delete w-10 text-center text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:rounded focus-visible:outline-none"
+                data-index="${index}"
+                aria-label="Eliminar gasto"
+            >&times;</button>
         `;
         expenseList.appendChild(expenseElement);
     });

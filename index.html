@@ -40,28 +40,28 @@
         
     </div>
 
-    <!-- Menú lateral -->
-    <aside class="bg-white dark:bg-gray-800 p-6 w-80 fixed right-0 top-0 h-screen overflow-y-auto border-l border-gray-200 dark:border-gray-700 transition-colors duration-500 shadow-lg md:shadow-none">
+    <!-- Menú lateral: en movil se muestra como bloque normal; en desktop, como sidebar fijo -->
+    <aside class="bg-white dark:bg-gray-800 p-6 w-full md:w-80 md:fixed md:right-0 md:top-0 md:h-screen md:overflow-y-auto border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 transition-colors duration-500 shadow-sm md:shadow-none">
         <form id="expense-form" class="flex flex-col gap-3">
-            <input type="text" id="expense-input" placeholder="Nombre del gasto (ej. Cine)" required class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors duration-500">
+            <input type="text" id="expense-input" placeholder="Nombre del gasto (ej. Cine)" required class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus-visible:outline-none transition-colors duration-500">
             
-            <input type="number" id="expense-amount" placeholder="Importe (€)" step="0.01" min="0" required class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors duration-500">
+            <input type="number" id="expense-amount" placeholder="Importe (€)" step="0.01" min="0" required class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus-visible:outline-none transition-colors duration-500">
             
-            <select id="expense-category" class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors duration-500">
+            <select id="expense-category" class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus-visible:outline-none transition-colors duration-500">
                 <option value="Ocio">Ocio</option>
                 <option value="Supermercado">Supermercado</option>
                 <option value="Hogar">Hogar</option>
                 <option value="Transporte">Transporte</option>
             </select>
             
-            <button type="submit" class="p-2.5 mt-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/50 transition-all shadow-md hover:shadow-lg">Añadir Gasto</button>
+            <button type="submit" class="p-2.5 mt-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 focus-visible:ring-4 focus-visible:ring-blue-500/50 focus-visible:outline-none transition-all shadow-md hover:shadow-lg">Añadir Gasto</button>
         </form>
         
         <div id="search-container" class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 transition-colors duration-500">
-            <input type="text" id="search-input" placeholder="Buscar gastos..." class="w-full p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors duration-500">
+            <input type="text" id="search-input" placeholder="Buscar gastos..." class="w-full p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus-visible:outline-none transition-colors duration-500">
         </div>
         
-        <button id="theme-toggle" class="mt-4 p-2.5 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-white rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 focus:ring-4 focus:ring-gray-500/50 transition-all w-full shadow-sm">Alternar Modo Oscuro</button>
+        <button id="theme-toggle" class="mt-4 p-2.5 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-white rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 focus-visible:ring-4 focus-visible:ring-gray-500/50 focus-visible:outline-none transition-all w-full shadow-sm">Alternar Modo Oscuro</button>
     </aside>
 
     <script src="app.js"></script>
