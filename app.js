@@ -275,6 +275,63 @@ function renderExpenses() {
 }
 
 /**
+ * Lee y normaliza los datos actuales del formulario.
+ *
+ * @returns {{ title: string, amount: number, category: string }}
+ */
+function getExpenseDataFromForm() {
+    return {
+        title: dom.expenseInput.value,
+        amount: Number(dom.amountInput.value),
+        category: dom.categoryInput.value
+    };
+}
+
+/**
+ * Enfoca el campo del formulario asociado al error de validación.
+ *
+ * @param {string} validationError
+ * @returns {void}
+ */
+function focusFieldForValidationError(validationError) {
+    if (validationError.includes('nombre')) {
+        dom.expenseInput.focus();
+        return;
+    }
+
+    if (validationError.includes('importe')) {
+        dom.amountInput.focus();
+        return;
+    }
+
+    dom.categoryInput.focus();
+}
+
+/**
+ * Guarda un gasto válido y actualiza la vista.
+ *
+ * @param {{ title: string, amount: number, category: string }} expenseData
+ * @returns {void}
+ */
+function persistExpense(expenseData) {
+    expenses.push(normalizeExpense(expenseData));
+    saveExpenses();
+    renderExpenses();
+}
+
+/**
+ * Restaura el formulario a su estado inicial tras un guardado exitoso.
+ *
+ * @returns {void}
+ */
+function resetExpenseForm() {
+    dom.expenseInput.value = '';
+    dom.amountInput.value = '';
+    dom.categoryInput.value = ALLOWED_CATEGORIES[0];
+    dom.expenseInput.focus();
+}
+
+/**
  * Maneja el envío del formulario de alta de gasto.
  *
  * @param {SubmitEvent} e
@@ -282,37 +339,18 @@ function renderExpenses() {
  */
 function handleFormSubmit(e) {
     e.preventDefault();
-    
-    const expenseData = {
-        title: dom.expenseInput.value,
-        amount: Number(dom.amountInput.value),
-        category: dom.categoryInput.value
-    };
+    const expenseData = getExpenseDataFromForm();
     const validationError = validateExpenseData(expenseData);
 
     if (validationError) {
         setFormError(validationError);
-
-        if (validationError.includes('nombre')) {
-            dom.expenseInput.focus();
-        } else if (validationError.includes('importe')) {
-            dom.amountInput.focus();
-        } else {
-            dom.categoryInput.focus();
-        }
-
+        focusFieldForValidationError(validationError);
         return;
     }
 
     clearFormError();
-    expenses.push(normalizeExpense(expenseData));
-    saveExpenses();
-    renderExpenses();
-
-    dom.expenseInput.value = '';
-    dom.amountInput.value = '';
-    dom.categoryInput.value = ALLOWED_CATEGORIES[0];
-    dom.expenseInput.focus();
+    persistExpense(expenseData);
+    resetExpenseForm();
 }
 
 /**
