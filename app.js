@@ -135,24 +135,32 @@ function normalizeExpense(expense) {
 function validateExpenseData(expense) {
     const normalizedTitle = typeof expense.title === 'string' ? expense.title.trim() : '';
 
-    if (normalizedTitle.length < 2) {
-        return 'El nombre del gasto debe tener al menos 2 caracteres.';
-    }
+    const validationRules = [
+        {
+            isInvalid: () => normalizedTitle.length < 2,
+            message: 'El nombre del gasto debe tener al menos 2 caracteres.'
+        },
+        {
+            isInvalid: () => normalizedTitle.length > MAX_TITLE_LENGTH,
+            message: `El nombre del gasto no puede superar los ${MAX_TITLE_LENGTH} caracteres.`
+        },
+        {
+            isInvalid: () => !Number.isFinite(expense.amount) || expense.amount <= 0,
+            message: 'El importe debe ser un número mayor que 0.'
+        },
+        {
+            isInvalid: () => expense.amount > MAX_AMOUNT,
+            message: `El importe no puede superar ${MAX_AMOUNT.toLocaleString('es-ES')} €.`
+        },
+        {
+            isInvalid: () => !ALLOWED_CATEGORIES.includes(expense.category),
+            message: 'La categoría seleccionada no es válida.'
+        }
+    ];
 
-    if (normalizedTitle.length > MAX_TITLE_LENGTH) {
-        return `El nombre del gasto no puede superar los ${MAX_TITLE_LENGTH} caracteres.`;
-    }
-
-    if (!Number.isFinite(expense.amount) || expense.amount <= 0) {
-        return 'El importe debe ser un número mayor que 0.';
-    }
-
-    if (expense.amount > MAX_AMOUNT) {
-        return `El importe no puede superar ${MAX_AMOUNT.toLocaleString('es-ES')} €.`;
-    }
-
-    if (!ALLOWED_CATEGORIES.includes(expense.category)) {
-        return 'La categoría seleccionada no es válida.';
+    const failedRule = validationRules.find((rule) => rule.isInvalid());
+    if (failedRule) {
+        return failedRule.message;
     }
 
     return null;
