@@ -4,16 +4,64 @@ let searchQuery = '';
 const ALLOWED_CATEGORIES = ['Ocio', 'Supermercado', 'Hogar', 'Transporte'];
 const MAX_TITLE_LENGTH = 60;
 const MAX_AMOUNT = 1000000;
+const dom = {};
 
-// Cargar gastos desde localStorage al cargar la página
-document.addEventListener('DOMContentLoaded', () => {
+/**
+ * Inicializa la aplicación y registra todos los listeners.
+ *
+ * @returns {void}
+ */
+function initializeApp() {
+    cacheDomElements();
+    initializeEventListeners();
+
     // Aplicar el tema guardado al iniciar
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
         document.documentElement.classList.add('dark');
     }
+
     loadExpenses();
-});
+}
+
+/**
+ * Cachea los nodos del DOM utilizados repetidamente.
+ *
+ * @returns {void}
+ */
+function cacheDomElements() {
+    dom.expenseForm = document.getElementById('expense-form');
+    dom.expenseInput = document.getElementById('expense-input');
+    dom.amountInput = document.getElementById('expense-amount');
+    dom.categoryInput = document.getElementById('expense-category');
+    dom.formError = document.getElementById('form-error');
+    dom.expenseList = document.getElementById('expense-list');
+    dom.searchInput = document.getElementById('search-input');
+    dom.themeToggle = document.getElementById('theme-toggle');
+}
+
+/**
+ * Vincula los eventos de UI con handlers con nombre.
+ *
+ * @returns {void}
+ */
+function initializeEventListeners() {
+    dom.expenseForm.addEventListener('submit', handleFormSubmit);
+    dom.expenseInput.addEventListener('input', clearFormError);
+    dom.amountInput.addEventListener('input', clearFormError);
+    dom.categoryInput.addEventListener('change', clearFormError);
+
+    dom.expenseList.addEventListener('click', handleExpenseListClick);
+    dom.expenseList.addEventListener('dragstart', handleExpenseListDragStart);
+    dom.expenseList.addEventListener('dragover', handleExpenseListDragOver);
+    dom.expenseList.addEventListener('dragend', handleExpenseListDragEnd);
+    dom.expenseList.addEventListener('drop', handleExpenseListDrop);
+
+    dom.searchInput.addEventListener('input', handleSearchInput);
+    dom.themeToggle.addEventListener('click', handleThemeToggleClick);
+}
+
+document.addEventListener('DOMContentLoaded', initializeApp);
 
 /**
  * Carga los gastos guardados en localStorage y normaliza su estructura
@@ -117,9 +165,8 @@ function validateExpenseData(expense) {
  * @returns {void}
  */
 function setFormError(message) {
-    const errorElement = document.getElementById('form-error');
-    errorElement.textContent = message;
-    errorElement.classList.remove('hidden');
+    dom.formError.textContent = message;
+    dom.formError.classList.remove('hidden');
 }
 
 /**
@@ -128,9 +175,8 @@ function setFormError(message) {
  * @returns {void}
  */
 function clearFormError() {
-    const errorElement = document.getElementById('form-error');
-    errorElement.textContent = '';
-    errorElement.classList.add('hidden');
+    dom.formError.textContent = '';
+    dom.formError.classList.add('hidden');
 }
 
 /**
@@ -216,8 +262,7 @@ function matchesSearchQuery(expense) {
  * @returns {void}
  */
 function renderExpenses() {
-    const expenseList = document.getElementById('expense-list');
-    expenseList.innerHTML = '';
+    dom.expenseList.innerHTML = '';
     
     expenses.forEach((expense, index) => {
         if (!matchesSearchQuery(expense)) {
@@ -225,21 +270,23 @@ function renderExpenses() {
         }
 
         const expenseElement = createExpenseElement(expense, index);
-        expenseList.appendChild(expenseElement);
+        dom.expenseList.appendChild(expenseElement);
     });
 }
 
-// Añadir event listener al formulario
-document.getElementById('expense-form').addEventListener('submit', function(e) {
+/**
+ * Maneja el envío del formulario de alta de gasto.
+ *
+ * @param {SubmitEvent} e
+ * @returns {void}
+ */
+function handleFormSubmit(e) {
     e.preventDefault();
-    const input = document.getElementById('expense-input');
-    const amountInput = document.getElementById('expense-amount');
-    const categoryInput = document.getElementById('expense-category');
     
     const expenseData = {
-        title: input.value,
-        amount: Number(amountInput.value),
-        category: categoryInput.value
+        title: dom.expenseInput.value,
+        amount: Number(dom.amountInput.value),
+        category: dom.categoryInput.value
     };
     const validationError = validateExpenseData(expenseData);
 
@@ -247,11 +294,11 @@ document.getElementById('expense-form').addEventListener('submit', function(e) {
         setFormError(validationError);
 
         if (validationError.includes('nombre')) {
-            input.focus();
+            dom.expenseInput.focus();
         } else if (validationError.includes('importe')) {
-            amountInput.focus();
+            dom.amountInput.focus();
         } else {
-            categoryInput.focus();
+            dom.categoryInput.focus();
         }
 
         return;
@@ -262,28 +309,37 @@ document.getElementById('expense-form').addEventListener('submit', function(e) {
     saveExpenses();
     renderExpenses();
 
-    input.value = '';
-    amountInput.value = '';
-    categoryInput.value = ALLOWED_CATEGORIES[0];
-    input.focus();
-});
+    dom.expenseInput.value = '';
+    dom.amountInput.value = '';
+    dom.categoryInput.value = ALLOWED_CATEGORIES[0];
+    dom.expenseInput.focus();
+}
 
-document.getElementById('expense-input').addEventListener('input', clearFormError);
-document.getElementById('expense-amount').addEventListener('input', clearFormError);
-document.getElementById('expense-category').addEventListener('change', clearFormError);
-
-// Delegación de eventos para eliminar y drag & drop
-document.getElementById('expense-list').addEventListener('click', function(e) {
-    if (e.target.classList.contains('expense-delete')) {
-        const index = parseInt(e.target.getAttribute('data-index'));
-        expenses.splice(index, 1);
-        saveExpenses();
-        renderExpenses();
+/**
+ * Maneja las acciones delegadas del listado (por ahora, eliminar gasto).
+ *
+ * @param {MouseEvent} e
+ * @returns {void}
+ */
+function handleExpenseListClick(e) {
+    const deleteButton = e.target.closest('.expense-delete');
+    if (!deleteButton) {
+        return;
     }
-});
 
-// Eventos de drag & drop
-document.getElementById('expense-list').addEventListener('dragstart', function(e) {
+    const index = parseInt(deleteButton.getAttribute('data-index'), 10);
+    expenses.splice(index, 1);
+    saveExpenses();
+    renderExpenses();
+}
+
+/**
+ * Inicia el estado de drag sobre un gasto.
+ *
+ * @param {DragEvent} e
+ * @returns {void}
+ */
+function handleExpenseListDragStart(e) {
     const expenseElement = e.target.closest('[data-expense-index]');
     if (!expenseElement || searchQuery) {
         e.preventDefault();
@@ -296,9 +352,15 @@ document.getElementById('expense-list').addEventListener('dragstart', function(e
     draggedExpenseElement.style.opacity = '0.5';
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', String(draggedExpenseIndex));
-});
+}
 
-document.getElementById('expense-list').addEventListener('dragover', function(e) {
+/**
+ * Reposiciona visualmente el elemento arrastrado durante el movimiento.
+ *
+ * @param {DragEvent} e
+ * @returns {void}
+ */
+function handleExpenseListDragOver(e) {
     if (!draggedExpenseElement) {
         return;
     }
@@ -306,17 +368,22 @@ document.getElementById('expense-list').addEventListener('dragover', function(e)
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     
-    const afterElement = getDragAfterElement(this, e.clientY);
-    const expenseList = this;
+    const afterElement = getDragAfterElement(dom.expenseList, e.clientY);
+    const expenseList = dom.expenseList;
     
     if (afterElement == null) {
         expenseList.appendChild(draggedExpenseElement);
     } else {
         expenseList.insertBefore(draggedExpenseElement, afterElement);
     }
-});
+}
 
-document.getElementById('expense-list').addEventListener('dragend', function(e) {
+/**
+ * Limpia el estado del drag al finalizar una interacción.
+ *
+ * @returns {void}
+ */
+function handleExpenseListDragEnd() {
     if (!draggedExpenseElement) {
         return;
     }
@@ -325,24 +392,29 @@ document.getElementById('expense-list').addEventListener('dragend', function(e) 
     draggedExpenseElement.style.opacity = '1';
     draggedExpenseElement = null;
     draggedExpenseIndex = null;
-});
+}
 
-document.getElementById('expense-list').addEventListener('drop', function(e) {
+/**
+ * Confirma el nuevo orden de gastos cuando se suelta un elemento.
+ *
+ * @param {DragEvent} e
+ * @returns {void}
+ */
+function handleExpenseListDrop(e) {
     if (!draggedExpenseElement || searchQuery) {
         return;
     }
 
     e.preventDefault();
     
-    const allExpenseElements = document.querySelectorAll('#expense-list > div');
+    const allExpenseElements = [...dom.expenseList.children];
     
     // Encontrar el nuevo índice basado en la posición del elemento
-    let newIndex = 0;
-    allExpenseElements.forEach((element, index) => {
-        if (element === draggedExpenseElement) {
-            newIndex = index;
-        }
-    });
+    const newIndex = allExpenseElements.indexOf(draggedExpenseElement);
+
+    if (newIndex === -1) {
+        return;
+    }
     
     // Reordenar el array de gastos
     if (draggedExpenseIndex !== newIndex && draggedExpenseIndex !== null) {
@@ -351,7 +423,7 @@ document.getElementById('expense-list').addEventListener('drop', function(e) {
         saveExpenses();
         renderExpenses();
     }
-});
+}
 
 /**
  * Calcula el elemento de referencia sobre el que debe insertarse el gasto
@@ -376,15 +448,24 @@ function getDragAfterElement(container, y) {
     }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
-// Funcionalidad de búsqueda
-document.getElementById('search-input').addEventListener('input', function() {
-    searchQuery = this.value.trim().toLowerCase();
+/**
+ * Actualiza el texto de búsqueda y repinta la lista.
+ *
+ * @param {Event} e
+ * @returns {void}
+ */
+function handleSearchInput(e) {
+    searchQuery = e.target.value.trim().toLowerCase();
     renderExpenses();
-});
+}
 
-// Alternar tema y guardar en localStorage
-document.getElementById('theme-toggle').addEventListener('click', function() {
+/**
+ * Alterna entre tema claro y oscuro y persiste la preferencia.
+ *
+ * @returns {void}
+ */
+function handleThemeToggleClick() {
     document.documentElement.classList.toggle('dark');
     const isDark = document.documentElement.classList.contains('dark');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
-});
+}
