@@ -14,10 +14,44 @@ document.addEventListener('DOMContentLoaded', () => {
 // Función para cargar gastos desde localStorage
 function loadExpenses() {
     const storedExpenses = localStorage.getItem('gastos');
-    if (storedExpenses) {
-        expenses = JSON.parse(storedExpenses);
+    if (!storedExpenses) {
         renderExpenses();
+        return;
     }
+
+    try {
+        const parsedExpenses = JSON.parse(storedExpenses);
+
+        if (!Array.isArray(parsedExpenses)) {
+            throw new Error('La lista de gastos almacenada no es válida');
+        }
+
+        expenses = parsedExpenses.filter(isValidExpense).map(normalizeExpense);
+    } catch (error) {
+        console.error('No se pudieron cargar los gastos guardados:', error);
+        expenses = [];
+        localStorage.removeItem('gastos');
+    }
+
+    renderExpenses();
+}
+
+function isValidExpense(expense) {
+    return Boolean(
+        expense
+        && typeof expense.title === 'string'
+        && expense.title.trim()
+        && Number.isFinite(Number(expense.amount))
+        && typeof expense.category === 'string'
+    );
+}
+
+function normalizeExpense(expense) {
+    return {
+        title: expense.title.trim(),
+        amount: Number(expense.amount),
+        category: expense.category
+    };
 }
 
 // Función para guardar gastos en localStorage
