@@ -28,58 +28,54 @@ function saveExpenses() {
 // Variable para rastrear el elemento que se está arrastrando
 let draggedExpenseIndex = null;
 
+function getCategoryBg(category) {
+    switch (category) {
+        case 'Ocio': return 'bg-purple-100 dark:bg-purple-700';
+        case 'Hogar': return 'bg-green-100 dark:bg-green-700';
+        case 'Transporte': return 'bg-blue-100 dark:bg-blue-700';
+        case 'Supermercado': return 'bg-yellow-100 dark:bg-yellow-700';
+        default: return 'bg-gray-100 dark:bg-gray-700';
+    }
+}
+
+function createExpenseElement(expense, index) {
+    const expenseElement = document.createElement('div');
+    const titleElement = document.createElement('span');
+    const amountElement = document.createElement('span');
+    const categoryElement = document.createElement('span');
+    const deleteButton = document.createElement('button');
+
+    expenseElement.className = 'flex items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-500 hover:shadow-md cursor-move';
+    expenseElement.draggable = true;
+    expenseElement.setAttribute('data-expense-index', index);
+
+    titleElement.className = 'flex-1 font-semibold text-gray-800 dark:text-gray-100 truncate pr-4';
+    titleElement.textContent = expense.title;
+
+    amountElement.className = 'w-24 text-right font-bold text-blue-600 dark:text-blue-400 px-3 py-1 bg-blue-50 dark:bg-blue-950 rounded-full mr-2';
+    amountElement.textContent = `${parseFloat(expense.amount).toFixed(2)} €`;
+
+    categoryElement.className = `w-32 text-center px-3 py-1 ${getCategoryBg(expense.category)} text-gray-600 dark:text-gray-300 rounded-full text-xs font-semibold`;
+    categoryElement.textContent = expense.category;
+
+    deleteButton.type = 'button';
+    deleteButton.className = 'expense-delete w-10 text-center text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:rounded focus-visible:outline-none';
+    deleteButton.setAttribute('data-index', index);
+    deleteButton.setAttribute('aria-label', 'Eliminar gasto');
+    deleteButton.textContent = '×';
+
+    expenseElement.append(titleElement, amountElement, categoryElement, deleteButton);
+
+    return expenseElement;
+}
+
 // Función para renderizar gastos
 function renderExpenses() {
     const expenseList = document.getElementById('expense-list');
     expenseList.innerHTML = '';
     
     expenses.forEach((expense, index) => {
-        const expenseElement = document.createElement('div');
-        // Estructura Flexbox para alinear todo en columnas:
-        // 1. Título (flex-1)
-        // 2. Importe (w-24)
-        // 3. Categoría (w-32)
-        // 4. Botón (w-10)
-        expenseElement.className = 'flex items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-500 hover:shadow-md cursor-move';
-        expenseElement.draggable = true;
-        expenseElement.setAttribute('data-expense-index', index);
-        
-        const amountText = parseFloat(expense.amount).toFixed(2);
-
-        // Función para obtener el color de fondo de la categoría
-        function getCategoryBg(category) {
-            switch (category) {
-                case 'Ocio': return 'bg-purple-100 dark:bg-purple-700';
-                case 'Hogar': return 'bg-green-100 dark:bg-green-700';
-                case 'Transporte': return 'bg-blue-100 dark:bg-blue-700';
-                case 'Supermercado': return 'bg-yellow-100 dark:bg-yellow-700';
-                default: return 'bg-gray-100 dark:bg-gray-700';
-            }
-        }
-
-        const categoryBg = getCategoryBg(expense.category);
-
-        expenseElement.innerHTML = `
-            <span class="flex-1 font-semibold text-gray-800 dark:text-gray-100 truncate pr-4">${expense.title}</span>
-            
-            <!-- Columna Importe (ancho fijo para alineación) -->
-            <span class="w-24 text-right font-bold text-blue-600 dark:text-blue-400 px-3 py-1 bg-blue-50 dark:bg-blue-950 rounded-full mr-2">
-                ${amountText} €
-            </span>
-            
-            <!-- Columna Categoría (ancho fijo) -->
-            <span class="w-32 text-center px-3 py-1 ${categoryBg} text-gray-600 dark:text-gray-300 rounded-full text-xs font-semibold">
-                ${expense.category}
-            </span>
-            
-            <!-- Columna Botón -->
-            <button
-                type="button"
-                class="expense-delete w-10 text-center text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:rounded focus-visible:outline-none"
-                data-index="${index}"
-                aria-label="Eliminar gasto"
-            >&times;</button>
-        `;
+        const expenseElement = createExpenseElement(expense, index);
         expenseList.appendChild(expenseElement);
     });
 }
