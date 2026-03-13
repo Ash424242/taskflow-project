@@ -298,11 +298,19 @@ function createExpenseElement(expense, index) {
 /**
  * Indica si un gasto coincide con la búsqueda activa.
  *
- * @param {{ title: string }} expense
+ * @param {{ title: string, category: string }} expense
  * @returns {boolean}
  */
 function matchesSearchQuery(expense) {
-    return expense.title.toLowerCase().includes(searchQuery);
+    if (!searchQuery) {
+        return true;
+    }
+
+    const normalizedQuery = searchQuery.toLowerCase();
+    const titleMatch = expense.title.toLowerCase().includes(normalizedQuery);
+    const categoryMatch = expense.category.toLowerCase().includes(normalizedQuery);
+
+    return titleMatch || categoryMatch;
 }
 
 /**

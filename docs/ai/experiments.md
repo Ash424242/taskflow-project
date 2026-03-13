@@ -46,3 +46,20 @@ Le pedí a la IA que resolviera los mismos problemas.
 - Calidad del código: con IA la solución sale más modular desde el inicio (función separada para empty state), mientras que sin IA probablemente haría primero una versión más directa dentro del render.
 - Comprensión: hacerlo yo me obliga a pensar mejor el flujo de renderizado; con IA avanzo más rápido, pero la revisión manual sigue siendo clave para no introducir mensajes o estilos incoherentes.
 
+### Tarea 2: Mejorar la búsqueda para que también encuentre por categoría
+
+#### 1. Resolución sin IA (mi enfoque)
+- Revisé la función de filtrado para identificar por qué solo buscaba en el título del gasto.
+- Definí el criterio de coincidencia: un gasto debe mostrarse si el texto buscado aparece en el título o en la categoría.
+- Ajusté la condición de filtrado para evaluar ambos campos y mantener la búsqueda sin distinguir mayúsculas de minúsculas.
+
+#### 2. Resolución con IA
+- Pedí a la IA una propuesta mínima para extender la búsqueda actual sin romper el comportamiento existente.
+- La sugerencia fue centralizar la comparación en una función clara, con una consulta normalizada y dos comprobaciones: título y categoría.
+- Revisé manualmente la solución y actualicé el placeholder del campo de búsqueda para reflejar el nuevo comportamiento.
+
+#### 3. Comparación
+- Tiempo invertido: sin IA me habría llevado unos 15-20 minutos; con IA se reduce a 6-10 minutos incluyendo revisión.
+- Calidad del código: con IA la propuesta llegó más ordenada desde el principio, con variables intermedias legibles y una condición final explícita.
+- Comprensión: al implementarlo yo, refuerzo la lógica de filtrado; con IA gano velocidad, pero debo validar que el cambio sea coherente con la experiencia de usuario.
+
