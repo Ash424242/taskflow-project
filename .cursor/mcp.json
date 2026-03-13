@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "mcp-filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "c:\\Proyectos\\taskflow-project"
+      ]
+    }
+  }
+}
