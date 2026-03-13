@@ -63,3 +63,20 @@ Le pedí a la IA que resolviera los mismos problemas.
 - Calidad del código: con IA la propuesta llegó más ordenada desde el principio, con variables intermedias legibles y una condición final explícita.
 - Comprensión: al implementarlo yo, refuerzo la lógica de filtrado; con IA gano velocidad, pero debo validar que el cambio sea coherente con la experiencia de usuario.
 
+### Tarea 3: Añadir un botón para resetear todos los gastos (con confirmación)
+
+#### 1. Resolución sin IA (mi enfoque)
+- Revisé la zona del panel lateral para decidir la ubicación del nuevo botón sin romper la jerarquía visual.
+- Implementé un evento de clic con confirmación previa para evitar borrados accidentales.
+- Al confirmar, vacié la lista de gastos, actualicé localStorage y repinté la interfaz.
+
+#### 2. Resolución con IA
+- Pedí a la IA una implementación simple y segura para borrar todos los gastos con una confirmación explícita.
+- La propuesta incluyó separar el comportamiento en un handler dedicado y reutilizar las funciones ya existentes de guardado y renderizado.
+- Revisé manualmente el texto del mensaje de confirmación y el estado final de la interfaz para asegurar consistencia.
+
+#### 3. Comparación
+- Tiempo invertido: sin IA me habría llevado unos 20-30 minutos; con IA se reduce a 10-15 minutos entre propuesta, integración y revisión.
+- Calidad del código: con IA el flujo quedó más estructurado desde el inicio, con pasos claros de validación, confirmación y actualización del estado.
+- Comprensión: al hacerlo por mi cuenta entiendo mejor el flujo de eventos; con IA avanzo más rápido, pero sigo necesitando validar casos límite para evitar pérdidas de datos no deseadas.
+

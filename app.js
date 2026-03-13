@@ -37,6 +37,7 @@ function cacheDomElements() {
     dom.formError = document.getElementById('form-error');
     dom.expenseList = document.getElementById('expense-list');
     dom.searchInput = document.getElementById('search-input');
+    dom.resetExpensesButton = document.getElementById('reset-expenses-button');
     dom.themeToggle = document.getElementById('theme-toggle');
 }
 
@@ -58,6 +59,7 @@ function initializeEventListeners() {
     dom.expenseList.addEventListener('drop', handleExpenseListDrop);
 
     dom.searchInput.addEventListener('input', handleSearchInput);
+    dom.resetExpensesButton.addEventListener('click', handleResetExpensesClick);
     dom.themeToggle.addEventListener('click', handleThemeToggleClick);
 }
 
@@ -584,6 +586,28 @@ function getDragAfterElement(container, y) {
  */
 function handleSearchInput(e) {
     searchQuery = e.target.value.trim().toLowerCase();
+    renderExpenses();
+}
+
+/**
+ * Elimina todos los gastos tras confirmar la acción con el usuario.
+ *
+ * @returns {void}
+ */
+function handleResetExpensesClick() {
+    if (expenses.length === 0) {
+        return;
+    }
+
+    const userConfirmed = window.confirm('¿Seguro que quieres borrar todos los gastos? Esta acción no se puede deshacer.');
+    if (!userConfirmed) {
+        return;
+    }
+
+    expenses = [];
+    searchQuery = '';
+    dom.searchInput.value = '';
+    saveExpenses();
     renderExpenses();
 }
 
