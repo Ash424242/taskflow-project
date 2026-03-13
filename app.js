@@ -306,12 +306,40 @@ function matchesSearchQuery(expense) {
 }
 
 /**
+ * Crea un mensaje de estado vacío contextual según el filtro activo.
+ *
+ * @returns {HTMLDivElement}
+ */
+function createEmptyStateElement() {
+    const emptyStateElement = document.createElement('div');
+    emptyStateElement.className = 'rounded-xl border border-dashed border-gray-300 dark:border-gray-600 bg-white/70 dark:bg-gray-800/70 p-6 text-center text-gray-600 dark:text-gray-300';
+
+    const titleElement = document.createElement('p');
+    titleElement.className = 'font-semibold text-gray-800 dark:text-gray-100';
+
+    const descriptionElement = document.createElement('p');
+    descriptionElement.className = 'mt-1 text-sm';
+
+    if (searchQuery) {
+        titleElement.textContent = 'No hay resultados para esta búsqueda.';
+        descriptionElement.textContent = 'Prueba con otro término o borra el filtro para ver todos los gastos.';
+    } else {
+        titleElement.textContent = 'Aún no has registrado gastos.';
+        descriptionElement.textContent = 'Añade tu primer gasto desde el formulario lateral.';
+    }
+
+    emptyStateElement.append(titleElement, descriptionElement);
+    return emptyStateElement;
+}
+
+/**
  * Renderiza la lista visible de gastos teniendo en cuenta el filtro actual.
  *
  * @returns {void}
  */
 function renderExpenses() {
     dom.expenseList.innerHTML = '';
+    let visibleExpenses = 0;
     
     expenses.forEach((expense, index) => {
         if (!matchesSearchQuery(expense)) {
@@ -320,7 +348,12 @@ function renderExpenses() {
 
         const expenseElement = createExpenseElement(expense, index);
         dom.expenseList.appendChild(expenseElement);
+        visibleExpenses += 1;
     });
+
+    if (visibleExpenses === 0) {
+        dom.expenseList.appendChild(createEmptyStateElement());
+    }
 }
 
 /**
