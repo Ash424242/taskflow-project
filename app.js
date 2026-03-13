@@ -35,6 +35,8 @@ function cacheDomElements() {
     dom.amountInput = document.getElementById('expense-amount');
     dom.categoryInput = document.getElementById('expense-category');
     dom.formError = document.getElementById('form-error');
+    dom.visibleCount = document.getElementById('visible-count');
+    dom.visibleTotal = document.getElementById('visible-total');
     dom.expenseList = document.getElementById('expense-list');
     dom.searchInput = document.getElementById('search-input');
     dom.resetExpensesButton = document.getElementById('reset-expenses-button');
@@ -343,6 +345,21 @@ function createEmptyStateElement() {
 }
 
 /**
+ * Actualiza el resumen con la cantidad y el total de gastos visibles.
+ *
+ * @param {number} visibleCount
+ * @param {number} visibleTotal
+ * @returns {void}
+ */
+function updateVisibleSummary(visibleCount, visibleTotal) {
+    dom.visibleCount.textContent = String(visibleCount);
+    dom.visibleTotal.textContent = `${visibleTotal.toLocaleString('es-ES', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })} €`;
+}
+
+/**
  * Renderiza la lista visible de gastos teniendo en cuenta el filtro actual.
  *
  * @returns {void}
@@ -350,6 +367,7 @@ function createEmptyStateElement() {
 function renderExpenses() {
     dom.expenseList.innerHTML = '';
     let visibleExpenses = 0;
+    let visibleTotal = 0;
     
     expenses.forEach((expense, index) => {
         if (!matchesSearchQuery(expense)) {
@@ -359,7 +377,10 @@ function renderExpenses() {
         const expenseElement = createExpenseElement(expense, index);
         dom.expenseList.appendChild(expenseElement);
         visibleExpenses += 1;
+        visibleTotal += expense.amount;
     });
+
+    updateVisibleSummary(visibleExpenses, visibleTotal);
 
     if (visibleExpenses === 0) {
         dom.expenseList.appendChild(createEmptyStateElement());
