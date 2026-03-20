@@ -2,10 +2,13 @@
 let expenses = [];
 let searchQuery = '';
 let isNetworkLoading = false;
+const DELETED_EXPENSES_STORAGE_KEY = 'taskflow:deletedExpenseIds:v1';
+const DELETED_EXPENSE_TTL_MS = 15 * 60 * 1000;
 const ALLOWED_CATEGORIES = ['Ocio', 'Supermercado', 'Hogar', 'Transporte'];
 const MAX_TITLE_LENGTH = 60;
 const MAX_AMOUNT = 1000000;
 const dom = {};
+let deletedExpenseRegistry = loadDeletedExpenseRegistry();
 
 /**
  * Inicializa la aplicación y registra todos los listeners.
@@ -81,7 +84,7 @@ async function loadExpenses() {
             throw new Error('Respuesta no válida del servidor.');
         }
 
-        expenses = apiExpenses.filter(isValidExpense).map(normalizeExpense);
+        expenses = filterOutDeletedExpenses(apiExpenses.filter(isValidExpense).map(normalizeExpense));
     } catch (error) {
         console.error('No se pudieron cargar las tareas desde la API:', error);
         const message = error && error.message ? error.message : 'No se pudo conectar con el servidor.';
@@ -91,6 +94,133 @@ async function loadExpenses() {
         setNetworkLoading(false);
         renderExpenses();
     }
+}
+
+/**
+ * Carga del almacenamiento local los IDs marcados como borrados.
+ *
+ * @returns {Record<string, number>}
+ */
+function loadDeletedExpenseRegistry() {
+    try {
+        const raw = localStorage.getItem(DELETED_EXPENSES_STORAGE_KEY);
+        if (!raw) {
+            return {};
+        }
+
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+            return {};
+        }
+
+        const now = Date.now();
+        return Object.entries(parsed).reduce((acc, [id, deletedAt]) => {
+            const numericId = Number(id);
+            const numericDeletedAt = Number(deletedAt);
+
+            if (!Number.isFinite(numericId) || !Number.isFinite(numericDeletedAt)) {
+                return acc;
+            }
+
+            if (now - numericDeletedAt <= DELETED_EXPENSE_TTL_MS) {
+                acc[String(numericId)] = numericDeletedAt;
+            }
+
+            return acc;
+        }, {});
+    } catch (_error) {
+        return {};
+    }
+}
+
+/**
+ * Persiste en localStorage el registro de IDs borrados.
+ *
+ * @returns {void}
+ */
+function saveDeletedExpenseRegistry() {
+    try {
+        localStorage.setItem(DELETED_EXPENSES_STORAGE_KEY, JSON.stringify(deletedExpenseRegistry));
+    } catch (_error) {
+        // Si el almacenamiento falla, la app sigue funcionando sin esta optimización.
+    }
+}
+
+/**
+ * Elimina del registro IDs expirados y guarda si hubo cambios.
+ *
+ * @returns {void}
+ */
+function pruneDeletedExpenseRegistry() {
+    const now = Date.now();
+    let changed = false;
+
+    Object.entries(deletedExpenseRegistry).forEach(([id, deletedAt]) => {
+        if (now - Number(deletedAt) > DELETED_EXPENSE_TTL_MS) {
+            delete deletedExpenseRegistry[id];
+            changed = true;
+        }
+    });
+
+    if (changed) {
+        saveDeletedExpenseRegistry();
+    }
+}
+
+/**
+ * Marca un gasto como borrado para ocultarlo en recargas posteriores.
+ *
+ * @param {number} id
+ * @returns {void}
+ */
+function markExpenseAsDeleted(id) {
+    const numericId = Number(id);
+    if (!Number.isFinite(numericId)) {
+        return;
+    }
+
+    deletedExpenseRegistry[String(numericId)] = Date.now();
+    saveDeletedExpenseRegistry();
+}
+
+/**
+ * Quita la marca de borrado de un gasto.
+ *
+ * @param {number} id
+ * @returns {void}
+ */
+function unmarkExpenseAsDeleted(id) {
+    const numericId = Number(id);
+    if (!Number.isFinite(numericId)) {
+        return;
+    }
+
+    const key = String(numericId);
+    if (!(key in deletedExpenseRegistry)) {
+        return;
+    }
+
+    delete deletedExpenseRegistry[key];
+    saveDeletedExpenseRegistry();
+}
+
+/**
+ * Filtra gastos marcados como borrados recientemente.
+ *
+ * @param {Array<{ id?: number|string }>} list
+ * @returns {Array}
+ */
+function filterOutDeletedExpenses(list) {
+    pruneDeletedExpenseRegistry();
+
+    return list.filter((expense) => {
+        const numericId = Number(expense?.id);
+        if (!Number.isFinite(numericId)) {
+            return true;
+        }
+
+        return !(String(numericId) in deletedExpenseRegistry);
+    });
 }
 
 /**
@@ -482,7 +612,9 @@ async function persistExpense(expenseData) {
         category: payload.category
     });
 
-    expenses.push(normalizeExpense(created));
+    const createdExpense = normalizeExpense(created);
+    unmarkExpenseAsDeleted(createdExpense.id);
+    expenses.push(createdExpense);
     renderExpenses();
 }
 
@@ -564,12 +696,14 @@ async function handleExpenseListClick(e) {
 
     try {
         await window.taskApi.eliminarTarea(numericId);
+        markExpenseAsDeleted(numericId);
         expenses = expenses.filter((expense) => expense.id !== numericId);
         renderExpenses();
     } catch (error) {
         // En despliegues serverless, la memoria en el backend puede no coincidir entre instancias.
         // Si la tarea ya no existe (404), asumimos que quedó eliminada y sincronizamos la UI.
         if (error && error.status === 404) {
+            markExpenseAsDeleted(numericId);
             expenses = expenses.filter((expense) => expense.id !== numericId);
             renderExpenses();
             setNetworkError('');
@@ -739,6 +873,8 @@ async function handleResetExpensesClick() {
         if (unexpectedErrors.length > 0) {
             throw unexpectedErrors[0].reason;
         }
+
+        idsToDelete.forEach((id) => markExpenseAsDeleted(id));
 
         expenses = [];
         searchQuery = '';
