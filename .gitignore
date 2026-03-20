@@ -1,1 +1,10 @@
-semana 2.md
+node_modules/
+server/node_modules/
+*.log
+.env
+.vercel/
+.vercel-build/
+
+# No subir documentación de referencia
+docs/ai/semana 2.md
+docs/ai/semana 3.md

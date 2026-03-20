@@ -1,10 +1,10 @@
 # Control de Gastos
 
-Aplicación web para registrar y visualizar gastos personales. Está construida con HTML, Tailwind CSS por CDN y JavaScript vanilla, con persistencia local mediante localStorage.
+Aplicación web para registrar y visualizar gastos personales. Está construida con HTML, Tailwind CSS por CDN y JavaScript vanilla, y la persistencia se realiza mediante un backend REST en Node.js/Express.
 
 ## Características
 
-Funciona como una SPA ligera en cliente (sin backend) y permite:
+Funciona como una SPA ligera en cliente y permite:
 
 - Registrar gastos con validaciones de formulario.
 - Buscar gastos por nombre o categoría.
@@ -12,7 +12,7 @@ Funciona como una SPA ligera en cliente (sin backend) y permite:
 - Reordenar gastos con arrastrar y soltar.
 - Reiniciar toda la lista con confirmación.
 - Consultar resumen de gastos visibles (cantidad y total).
-- Mantener preferencia de tema claro/oscuro.
+- Alternar el modo claro/oscuro (sin persistencia en el navegador).
 
 ## Tecnologías Utilizadas
 
@@ -24,7 +24,8 @@ Funciona como una SPA ligera en cliente (sin backend) y permite:
 
 - `index.html`: Estructura principal de la aplicación
 - `app.js`: Lógica de JavaScript para la interactividad
-- `styles.css`: Estilos CSS (no utilizado en la versión final con Tailwind)
+- `src/api/client.js`: Cliente HTTP del frontend (consumo de la API REST)
+- `server/`: Backend Express con arquitectura por capas
 - `package.json`: Archivo de configuración de dependencias
 
 ### Estructura actual (ampliada)
@@ -36,6 +37,10 @@ taskflow-project/
 ├─ package.json
 ├─ package-lock.json
 ├─ README.md
+├─ server/
+├─ src/
+│  └─ api/
+│     └─ client.js
 ├─ docs/
 │  └─ ai/
 │     ├─ ai-comparison.md
@@ -74,7 +79,7 @@ Nota: en la versión actual del repositorio no se utiliza un archivo `styles.css
 
 ### Reordenar Gastos
 - Puedes arrastrar y soltar gastos para cambiar su orden
-- El nuevo orden se guarda automáticamente en localStorage
+- El nuevo orden se mantiene en la interfaz durante la sesión de la página; el backend no persiste el orden.
 
 ### Resetear Todos los Gastos
 - Haz clic en "Resetear todos los gastos" para vaciar la lista
@@ -107,7 +112,7 @@ Resultado esperado: solo se muestran los gastos cuyo nombre o categoría coincid
 2. Arrástralo a una nueva posición.
 3. Suéltalo donde quieras colocarlo.
 
-Resultado esperado: el orden de la lista cambia y queda guardado para la próxima vez que abras la aplicación.
+Resultado esperado: el orden de la lista cambia mientras la página está abierta; al recargar, se reflejará el orden devuelto por la API.
 
 ### Ejemplo 4: Reiniciar la lista
 1. Haz clic en "Resetear todos los gastos".
@@ -115,6 +120,82 @@ Resultado esperado: el orden de la lista cambia y queda guardado para la próxim
 
 Resultado esperado: se eliminan todos los gastos guardados y la lista queda vacía.
 
-## Despliegue
+## Backend REST (Fase 3): arquitectura, endpoints y consumo
 
-La aplicación está diseñada para ser desplegada en la plataforma Vercel.
+### ¿Qué cambió en esta fase?
+En la semana 3 se introduce un backend con Express y una API RESTful. El frontend deja de depender de `localStorage` y pasa a consumir la API para cargar, crear y eliminar tareas.
+
+### Arquitectura por capas del backend
+La carpeta `server/` separa responsabilidades en capas unidireccionales:
+- `server/src/routes/`: enrutamiento HTTP (mapea URL y verbo a controladores).
+- `server/src/controllers/`: validación defensiva y formateo de respuestas HTTP.
+- `server/src/services/`: lógica de negocio pura con persistencia en memoria (array).
+- `server/src/index.js`: inicialización de Express, montaje de rutas y manejo global de errores.
+- `server/src/config/env.js`: carga y validación del entorno (dotenv + PORT).
+
+### Middlewares y manejo de errores
+En `server/src/index.js` se aplican:
+- `cors()`: habilita el consumo desde el frontend.
+- `express.json()`: parsea el cuerpo JSON de `POST` y lo deja disponible en `req.body`.
+- `loggerAcademico`: middleware de auditoría que registra método, ruta, código de estado y duración.
+
+El manejo global de excepciones traduce errores:
+- `NOT_FOUND` -> `404` con un mensaje de error en JSON.
+- cualquier otro error no controlado -> `500` con un mensaje genérico y `console.error(err)` para mantener trazabilidad sin exponer detalles al cliente.
+
+### API REST
+Base: `/api/v1/tasks`
+
+1. `GET /api/v1/tasks`
+   - Devuelve `200 OK` con un array JSON de tareas: `{ id, title, amount, category }`.
+
+2. `POST /api/v1/tasks`
+   - Devuelve `201 Created` con la tarea creada.
+   - Devuelve `400 Bad Request` con `{ "error": "..." }` si el payload no cumple el contrato esperado.
+   - Body esperado:
+     - `title` (string, 2-60 caracteres)
+     - `amount` (número, mayor que 0)
+     - `category` (una de `Ocio`, `Supermercado`, `Hogar`, `Transporte`)
+
+3. `DELETE /api/v1/tasks/:id`
+   - Devuelve `204 No Content` cuando se elimina correctamente.
+   - Devuelve `400 Bad Request` si el id no es válido.
+   - Devuelve `404 Not Found` si la tarea no existe.
+
+### Pruebas de integración (Postman / Thunder Client)
+El backend usa memoria en lugar de una base de datos, por lo que al reiniciar el servidor la lista se vacía.
+
+Casos recomendados:
+- POST inválido: enviar un body sin `title` y comprobar que responde `400` con `{ "error": "..." }`.
+- POST inválido (importe): enviar `amount` como texto (por ejemplo `"abc"`) y confirmar que responde `400`.
+- DELETE inexistente: borrar un id que no existe (por ejemplo `999`) y comprobar que responde `404` con `{ "error": "La tarea no existe." }`.
+
+### Consumo desde el frontend (sin LocalStorage)
+El archivo `src/api/client.js` encapsula el acceso HTTP (`fetch`) y centraliza:
+- construcción de URL (base + ruta),
+- parseo de JSON,
+- traducción de errores HTTP en `Error` con `status`.
+
+En `app.js`:
+- se realiza `GET /api/v1/tasks` al iniciar,
+- se hace `POST /api/v1/tasks` al enviar el formulario,
+- se hace `DELETE /api/v1/tasks/:id` al borrar,
+- la interfaz muestra un estado de carga (`#network-loading`) y, en caso de fallo, un estado de error (`#network-error`).
+
+### Ejecución local
+1. Backend:
+   - `cd server`
+   - `npm install`
+   - `npm run dev`
+2. Frontend:
+   - abre `index.html` en el navegador.
+
+Si el backend no está en `http://localhost:3000`, define antes de cargar la página:
+`window.TASKFLOW_API_BASE_URL = "http://tu-servidor:PUERTO";`
+
+### Despliegue en Vercel
+Este proyecto se despliega como un único repo/proyecto en Vercel:
+- El frontend estático se sirve desde la raíz (`index.html`, `app.js`, `src/api/client.js`).
+- La API REST se expone como funciones serverless bajo `api/v1/tasks/...` (mismo repo), de forma que el frontend puede consumir `/api/v1/tasks` desde el mismo origen.
+
+No hace falta configurar `TASKFLOW_API_BASE_URL` si Vercel sirve la API desde el mismo dominio.

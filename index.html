@@ -11,12 +11,10 @@
             content: ['./*.{html,js}']
         }
     </script>
-    <!-- Script para cargar el modo oscuro desde localStorage antes de pintar la web (evita parpadeos) -->
+    <!-- Script para aplicar el modo oscuro antes de pintar la web (evita parpadeos) -->
     <script>
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
         }
     </script>
 </head>
@@ -78,6 +76,12 @@
                     </div>
                 </section>
 
+                <div id="network-loading" class="hidden mt-4 bg-blue-50 border border-blue-200 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900/60 dark:text-blue-200 p-3 rounded-lg text-sm flex items-center gap-3" role="status" aria-live="polite">
+                    <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></span>
+                    Cargando tareas...
+                </div>
+                <div id="network-error" class="hidden mt-4 bg-red-50 border border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900/60 dark:text-red-200 p-3 rounded-lg text-sm" role="alert" aria-live="polite"></div>
+
                 <section id="expense-list" class="flex flex-col gap-4">
                     <!-- Los gastos se añadirán aquí dinámicamente -->
                 </section>
@@ -86,6 +90,7 @@
         
     </div>
 
+    <script src="src/api/client.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

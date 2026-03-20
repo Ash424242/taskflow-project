@@ -18,6 +18,11 @@
     "url": "https://github.com/Ash424242/taskflow-project/issues"
   },
   "homepage": "https://github.com/Ash424242/taskflow-project#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  },
   "devDependencies": {
     "autoprefixer": "^10.4.27",
     "postcss": "^8.5.8",

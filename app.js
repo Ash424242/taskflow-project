@@ -1,6 +1,7 @@
 // Array para almacenar gastos
 let expenses = [];
 let searchQuery = '';
+let isNetworkLoading = false;
 const ALLOWED_CATEGORIES = ['Ocio', 'Supermercado', 'Hogar', 'Transporte'];
 const MAX_TITLE_LENGTH = 60;
 const MAX_AMOUNT = 1000000;
@@ -14,12 +15,6 @@ const dom = {};
 function initializeApp() {
     cacheDomElements();
     initializeEventListeners();
-
-    // Aplicar el tema guardado al iniciar
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-    }
 
     loadExpenses();
 }
@@ -41,6 +36,9 @@ function cacheDomElements() {
     dom.searchInput = document.getElementById('search-input');
     dom.resetExpensesButton = document.getElementById('reset-expenses-button');
     dom.themeToggle = document.getElementById('theme-toggle');
+    dom.networkLoading = document.getElementById('network-loading');
+    dom.networkError = document.getElementById('network-error');
+    dom.formSubmitButton = dom.expenseForm.querySelector('button[type="submit"]');
 }
 
 /**
@@ -68,33 +66,31 @@ function initializeEventListeners() {
 document.addEventListener('DOMContentLoaded', initializeApp);
 
 /**
- * Carga los gastos guardados en localStorage y normaliza su estructura
- * antes de pintar la lista.
+ * Carga los gastos desde la API y normaliza su estructura antes de pintar la lista.
  *
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function loadExpenses() {
-    const storedExpenses = localStorage.getItem('gastos');
-    if (!storedExpenses) {
-        renderExpenses();
-        return;
-    }
+async function loadExpenses() {
+    setNetworkLoading(true);
+    setNetworkError('');
 
     try {
-        const parsedExpenses = JSON.parse(storedExpenses);
+        const apiExpenses = await window.taskApi.obtenerTareas();
 
-        if (!Array.isArray(parsedExpenses)) {
-            throw new Error('La lista de gastos almacenada no es válida');
+        if (!Array.isArray(apiExpenses)) {
+            throw new Error('Respuesta no válida del servidor.');
         }
 
-        expenses = parsedExpenses.filter(isValidExpense).map(normalizeExpense);
+        expenses = apiExpenses.filter(isValidExpense).map(normalizeExpense);
     } catch (error) {
-        console.error('No se pudieron cargar los gastos guardados:', error);
+        console.error('No se pudieron cargar las tareas desde la API:', error);
+        const message = error && error.message ? error.message : 'No se pudo conectar con el servidor.';
+        setNetworkError(`No se pudo cargar la lista de gastos. ${message}`);
         expenses = [];
-        localStorage.removeItem('gastos');
+    } finally {
+        setNetworkLoading(false);
+        renderExpenses();
     }
-
-    renderExpenses();
 }
 
 /**
@@ -124,6 +120,7 @@ function isValidExpense(expense) {
  */
 function normalizeExpense(expense) {
     return {
+        id: expense && expense.id !== undefined ? Number(expense.id) : undefined,
         title: expense.title.trim(),
         amount: Number(expense.amount),
         category: expense.category
@@ -192,12 +189,62 @@ function clearFormError() {
 }
 
 /**
- * Persiste la lista actual de gastos en localStorage.
+ * Muestra u oculta indicadores de carga en llamadas a la API.
  *
+ * @param {boolean} loading
  * @returns {void}
  */
-function saveExpenses() {
-    localStorage.setItem('gastos', JSON.stringify(expenses));
+function setNetworkLoading(loading) {
+    isNetworkLoading = Boolean(loading);
+
+    if (dom.networkLoading) {
+        dom.networkLoading.classList.toggle('hidden', !isNetworkLoading);
+    }
+
+    if (dom.formSubmitButton) {
+        dom.formSubmitButton.disabled = isNetworkLoading;
+    }
+
+    if (dom.resetExpensesButton) {
+        dom.resetExpensesButton.disabled = isNetworkLoading;
+    }
+
+    if (dom.expenseInput) {
+        dom.expenseInput.disabled = isNetworkLoading;
+    }
+
+    if (dom.amountInput) {
+        dom.amountInput.disabled = isNetworkLoading;
+    }
+
+    if (dom.categoryInput) {
+        dom.categoryInput.disabled = isNetworkLoading;
+    }
+
+    if (dom.searchInput) {
+        dom.searchInput.disabled = isNetworkLoading;
+    }
+}
+
+/**
+ * Muestra un mensaje de error relacionado con la red.
+ *
+ * @param {string} message
+ * @returns {void}
+ */
+function setNetworkError(message) {
+    if (!dom.networkError) {
+        return;
+    }
+
+    if (!message) {
+        dom.networkError.textContent = '';
+        dom.networkError.classList.add('hidden');
+        return;
+    }
+
+    dom.networkError.textContent = message;
+    dom.networkError.classList.remove('hidden');
 }
 
 // Variable para rastrear el elemento que se está arrastrando
@@ -262,14 +309,14 @@ function createExpenseCategoryElement(category) {
 /**
  * Crea el botón de borrado de una fila de gasto.
  *
- * @param {number} index
+ * @param {number | undefined} id
  * @returns {HTMLButtonElement}
  */
-function createExpenseDeleteButton(index) {
+function createExpenseDeleteButton(id) {
     const deleteButton = document.createElement('button');
     deleteButton.type = 'button';
     deleteButton.className = 'expense-delete w-10 text-center text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:rounded focus-visible:outline-none';
-    deleteButton.setAttribute('data-index', index);
+    deleteButton.setAttribute('data-id', id);
     deleteButton.setAttribute('aria-label', 'Eliminar gasto');
     deleteButton.textContent = '×';
     return deleteButton;
@@ -292,7 +339,7 @@ function createExpenseElement(expense, index) {
     const titleElement = createExpenseTitleElement(expense.title);
     const amountElement = createExpenseAmountElement(expense.amount);
     const categoryElement = createExpenseCategoryElement(expense.category);
-    const deleteButton = createExpenseDeleteButton(index);
+    const deleteButton = createExpenseDeleteButton(expense.id);
 
     expenseElement.append(titleElement, amountElement, categoryElement, deleteButton);
 
@@ -426,9 +473,16 @@ function focusFieldForValidationError(validationError) {
  * @param {{ title: string, amount: number, category: string }} expenseData
  * @returns {void}
  */
-function persistExpense(expenseData) {
-    expenses.push(normalizeExpense(expenseData));
-    saveExpenses();
+async function persistExpense(expenseData) {
+    const payload = normalizeExpense(expenseData);
+
+    const created = await window.taskApi.crearTarea({
+        title: payload.title,
+        amount: payload.amount,
+        category: payload.category
+    });
+
+    expenses.push(normalizeExpense(created));
     renderExpenses();
 }
 
@@ -450,7 +504,7 @@ function resetExpenseForm() {
  * @param {SubmitEvent} e
  * @returns {void}
  */
-function handleFormSubmit(e) {
+async function handleFormSubmit(e) {
     e.preventDefault();
     const expenseData = getExpenseDataFromForm();
     const validationError = validateExpenseData(expenseData);
@@ -462,8 +516,24 @@ function handleFormSubmit(e) {
     }
 
     clearFormError();
-    persistExpense(expenseData);
-    resetExpenseForm();
+    setNetworkError('');
+    setNetworkLoading(true);
+
+    try {
+        await persistExpense(expenseData);
+        resetExpenseForm();
+    } catch (error) {
+        const message = error && error.message ? error.message : 'No se pudo completar la operación.';
+        if (error && error.status === 400) {
+            setFormError(message);
+            focusFieldForValidationError(message);
+            return;
+        }
+
+        setNetworkError(message);
+    } finally {
+        setNetworkLoading(false);
+    }
 }
 
 /**
@@ -472,16 +542,36 @@ function handleFormSubmit(e) {
  * @param {MouseEvent} e
  * @returns {void}
  */
-function handleExpenseListClick(e) {
+async function handleExpenseListClick(e) {
     const deleteButton = e.target.closest('.expense-delete');
     if (!deleteButton) {
         return;
     }
 
-    const index = parseInt(deleteButton.getAttribute('data-index'), 10);
-    expenses.splice(index, 1);
-    saveExpenses();
-    renderExpenses();
+    if (isNetworkLoading) {
+        return;
+    }
+
+    const id = deleteButton.getAttribute('data-id');
+    const numericId = Number(id);
+
+    if (!Number.isFinite(numericId)) {
+        return;
+    }
+
+    setNetworkError('');
+    setNetworkLoading(true);
+
+    try {
+        await window.taskApi.eliminarTarea(numericId);
+        expenses = expenses.filter((expense) => expense.id !== numericId);
+        renderExpenses();
+    } catch (error) {
+        const message = error && error.message ? error.message : 'No se pudo eliminar la tarea.';
+        setNetworkError(message);
+    } finally {
+        setNetworkLoading(false);
+    }
 }
 
 /**
@@ -492,7 +582,7 @@ function handleExpenseListClick(e) {
  */
 function handleExpenseListDragStart(e) {
     const expenseElement = e.target.closest('[data-expense-index]');
-    if (!expenseElement || searchQuery) {
+    if (!expenseElement || searchQuery || isNetworkLoading) {
         e.preventDefault();
         return;
     }
@@ -552,7 +642,7 @@ function handleExpenseListDragEnd() {
  * @returns {void}
  */
 function handleExpenseListDrop(e) {
-    if (!draggedExpenseElement || searchQuery) {
+    if (!draggedExpenseElement || searchQuery || isNetworkLoading) {
         return;
     }
 
@@ -571,7 +661,6 @@ function handleExpenseListDrop(e) {
     if (draggedExpenseIndex !== newIndex && draggedExpenseIndex !== null) {
         const [draggedExpense] = expenses.splice(draggedExpenseIndex, 1);
         expenses.splice(newIndex, 0, draggedExpense);
-        saveExpenses();
         renderExpenses();
     }
 }
@@ -615,7 +704,7 @@ function handleSearchInput(e) {
  *
  * @returns {void}
  */
-function handleResetExpensesClick() {
+async function handleResetExpensesClick() {
     if (expenses.length === 0) {
         return;
     }
@@ -625,11 +714,31 @@ function handleResetExpensesClick() {
         return;
     }
 
-    expenses = [];
-    searchQuery = '';
-    dom.searchInput.value = '';
-    saveExpenses();
-    renderExpenses();
+    const idsToDelete = expenses.map((expense) => expense.id).filter((id) => Number.isFinite(Number(id)));
+
+    setNetworkError('');
+    setNetworkLoading(true);
+
+    let shouldReloadAfterError = false;
+
+    try {
+        await Promise.all(idsToDelete.map((id) => window.taskApi.eliminarTarea(id)));
+
+        expenses = [];
+        searchQuery = '';
+        dom.searchInput.value = '';
+        renderExpenses();
+    } catch (error) {
+        const message = error && error.message ? error.message : 'No se pudo borrar la lista completa.';
+        setNetworkError(message);
+        shouldReloadAfterError = true;
+    } finally {
+        setNetworkLoading(false);
+    }
+
+    if (shouldReloadAfterError) {
+        await loadExpenses();
+    }
 }
 
 /**
@@ -639,6 +748,4 @@ function handleResetExpensesClick() {
  */
 function handleThemeToggleClick() {
     document.documentElement.classList.toggle('dark');
-    const isDark = document.documentElement.classList.contains('dark');
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
 }
