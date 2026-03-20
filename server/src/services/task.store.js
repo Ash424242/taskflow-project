@@ -1,7 +1,14 @@
 const fs = require('fs/promises');
 const path = require('path');
 
-const DATA_DIR = path.resolve(__dirname, '../../data');
+// En Vercel, el directorio del repo suele ser de solo-lectura en serverless.
+// Usamos /tmp para garantizar escrituras (se mantiene durante la vida del contenedor).
+const DATA_DIR = process.env.TASKFLOW_DATA_DIR
+  ? process.env.TASKFLOW_DATA_DIR
+  : process.env.VERCEL
+    ? '/tmp/taskflow-data'
+    : path.resolve(__dirname, '../../data');
+
 const DATA_FILE = path.join(DATA_DIR, 'tasks.json');
 
 let cachedState = null; // { tasks: Array, nextId: number }
@@ -10,6 +17,7 @@ let saveQueue = Promise.resolve();
 
 async function loadState() {
   try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
     const raw = await fs.readFile(DATA_FILE, 'utf8');
     const parsed = JSON.parse(raw);
 
