@@ -36,15 +36,16 @@ function validatePayload(data) {
   };
 }
 
-function getAllTasks(req, res, next) {
+async function getAllTasks(req, res, next) {
   try {
-    return res.status(200).json(taskService.obtenerTodas());
+    const tasks = await taskService.obtenerTodas();
+    return res.status(200).json(tasks);
   } catch (err) {
     return next(err);
   }
 }
 
-function createTask(req, res, next) {
+async function createTask(req, res, next) {
   const validation = validatePayload(req.body);
 
   if (!validation.valid) {
@@ -52,14 +53,14 @@ function createTask(req, res, next) {
   }
 
   try {
-    const created = taskService.crearTarea(validation.value);
+    const created = await taskService.crearTarea(validation.value);
     return res.status(201).json(created);
   } catch (err) {
     return next(err);
   }
 }
 
-function deleteTask(req, res, next) {
+async function deleteTask(req, res, next) {
   const { id } = req.params;
   const numericId = Number(id);
 
@@ -68,7 +69,7 @@ function deleteTask(req, res, next) {
   }
 
   try {
-    taskService.eliminarTarea(numericId);
+    await taskService.eliminarTarea(numericId);
     return res.status(204).send();
   } catch (err) {
     return next(err);

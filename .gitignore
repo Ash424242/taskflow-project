@@ -5,6 +5,12 @@ server/node_modules/
 .vercel/
 .vercel-build/
 
+# Persistencia de backend (no se sube el estado de datos)
+server/data/
+
 # No subir documentación de referencia
 docs/ai/semana 2.md
 docs/ai/semana 3.md
+
+# Generado automáticamente en build (según hora del último commit)
+version.js

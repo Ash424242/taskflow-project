@@ -1,31 +1,15 @@
-let tasks = [];
-let nextId = 1;
+const taskStore = require('./task.store');
 
-function obtenerTodas() {
-  return tasks;
+async function obtenerTodas() {
+  return await taskStore.getAll();
 }
 
-function crearTarea(data) {
-  const nuevaTarea = {
-    id: nextId++,
-    title: data.title,
-    amount: data.amount,
-    category: data.category
-  };
-
-  tasks.push(nuevaTarea);
-  return nuevaTarea;
+async function crearTarea(data) {
+  return await taskStore.add(data);
 }
 
-function eliminarTarea(id) {
-  const numericId = Number(id);
-  const index = tasks.findIndex((task) => task.id === numericId);
-
-  if (index === -1) {
-    throw new Error('NOT_FOUND');
-  }
-
-  tasks.splice(index, 1);
+async function eliminarTarea(id) {
+  await taskStore.remove(id);
 }
 
 module.exports = {

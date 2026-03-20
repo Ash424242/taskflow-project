@@ -26,8 +26,8 @@
 <body class="font-sans bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white min-h-screen transition-colors duration-500">
     
     <!-- Versión -->
-    <div class="fixed top-2 left-2 text-xs text-gray-400 dark:text-gray-600 font-mono pointer-events-none">
-        v-13.03.2026-14:25
+    <div id="version-tag" class="fixed top-2 left-2 text-xs text-gray-400 dark:text-gray-600 font-mono pointer-events-none">
+        v-?
     </div>
     
     <!-- Menú lateral: en movil se muestra como bloque normal; en desktop, como sidebar fijo -->
@@ -95,6 +95,13 @@
         
     </div>
 
+    <script src="version.js"></script>
+    <script>
+        const el = document.getElementById('version-tag');
+        if (el && window.TASKFLOW_VERSION) {
+            el.textContent = window.TASKFLOW_VERSION;
+        }
+    </script>
     <script src="src/api/client.js"></script>
     <script src="app.js"></script>
 </body>
