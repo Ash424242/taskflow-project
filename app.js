@@ -567,6 +567,15 @@ async function handleExpenseListClick(e) {
         expenses = expenses.filter((expense) => expense.id !== numericId);
         renderExpenses();
     } catch (error) {
+        // En despliegues serverless, la memoria en el backend puede no coincidir entre instancias.
+        // Si la tarea ya no existe (404), asumimos que quedó eliminada y sincronizamos la UI.
+        if (error && error.status === 404) {
+            expenses = expenses.filter((expense) => expense.id !== numericId);
+            renderExpenses();
+            setNetworkError('');
+            return;
+        }
+
         const message = error && error.message ? error.message : 'No se pudo eliminar la tarea.';
         setNetworkError(message);
     } finally {
@@ -722,7 +731,14 @@ async function handleResetExpensesClick() {
     let shouldReloadAfterError = false;
 
     try {
-        await Promise.all(idsToDelete.map((id) => window.taskApi.eliminarTarea(id)));
+        // Si el backend serverless maneja solicitudes en instancias distintas,
+        // un DELETE podría responder 404 aunque el estado en la UI ya deba eliminarse.
+        const results = await Promise.allSettled(idsToDelete.map((id) => window.taskApi.eliminarTarea(id)));
+        const unexpectedErrors = results.filter((r) => r.status === 'rejected' && (!r.reason || r.reason.status !== 404));
+
+        if (unexpectedErrors.length > 0) {
+            throw unexpectedErrors[0].reason;
+        }
 
         expenses = [];
         searchQuery = '';
@@ -748,4 +764,7 @@ async function handleResetExpensesClick() {
  */
 function handleThemeToggleClick() {
     document.documentElement.classList.toggle('dark');
+
+    const isDark = document.documentElement.classList.contains('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
 }
