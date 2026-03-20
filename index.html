@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Permite que `*-h-full` (100%) se mida contra la altura real del viewport */
+        html, body { height: 100%; }
+    </style>
     <title>Control de Gastos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -23,7 +27,7 @@
         }
     </script>
 </head>
-<body class="font-sans bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white min-h-screen transition-colors duration-500">
+<body class="font-sans bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white min-h-full transition-colors duration-500">
     
     <!-- Versión -->
     <div id="version-tag" class="fixed top-2 left-2 text-xs text-gray-400 dark:text-gray-600 font-mono pointer-events-none">
@@ -31,7 +35,7 @@
     </div>
     
     <!-- Menú lateral: en movil se muestra como bloque normal; en desktop, como sidebar fijo -->
-    <aside class="bg-white dark:bg-gray-800 p-6 w-full md:w-80 md:fixed md:right-0 md:top-0 md:h-screen md:overflow-y-auto border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 transition-colors duration-500 shadow-sm md:shadow-none flex flex-col">
+    <aside class="bg-white dark:bg-gray-800 p-6 w-full md:w-1/4 md:fixed md:right-0 md:top-0 md:h-full md:overflow-y-auto border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 transition-colors duration-500 shadow-sm md:shadow-none flex flex-col">
         <form id="expense-form" class="flex flex-col gap-3">
             <input type="text" id="expense-input" placeholder="Nombre del gasto (ej. Cine)" minlength="2" maxlength="60" required class="p-2.5 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus-visible:outline-none transition-colors duration-500">
             
@@ -58,7 +62,7 @@
         <button id="reset-expenses-button" type="button" class="mt-4 md:mt-auto p-2.5 bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-300 rounded-lg font-semibold hover:bg-red-200 dark:hover:bg-red-900/50 focus-visible:ring-4 focus-visible:ring-red-500/40 focus-visible:outline-none transition-all w-full shadow-sm">Resetear todos los gastos</button>
     </aside>
 
-    <div class="flex flex-col md:pr-80 min-h-screen">
+    <div class="flex flex-col md:pr-1/4 min-h-full">
         
         <!-- Header con título -->
         <header class="bg-white text-gray-900 dark:bg-gray-800 dark:text-white p-8 text-center w-full transition-colors duration-500 shadow-sm">
